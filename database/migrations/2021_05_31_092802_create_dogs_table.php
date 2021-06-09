@@ -6,24 +6,25 @@ use Illuminate\Support\Facades\Schema;
 
 class CreateDogsTable extends Migration
 {
+    private const TABLE = 'dogs';
+
     /**
      * Run the migrations.
      *
      * @return void
      */
-    public function up()
+    public function up(): void
     {
-        Schema::create('dogs', function (Blueprint $table) {
+        Schema::create(self::TABLE, function (Blueprint $table) {
             $table->id();
             $table->timestamps();
             $table->string('name');
-            $table->bigInteger('owner_id');
+            $table->unsignedBigInteger('owner_id');
 
             $table->foreign('owner_id')
                 ->references('id')
-                ->on('owners')
-                ->onUpdate('cascade')
-                ->onDelete('cascade');
+                ->on(self::TABLE)
+                ->onUpdate('cascade');
         });
     }
 
@@ -32,8 +33,8 @@ class CreateDogsTable extends Migration
      *
      * @return void
      */
-    public function down()
+    public function down(): void
     {
-        Schema::dropIfExists('dogs');
+        Schema::dropIfExists(self::TABLE);
     }
 }
