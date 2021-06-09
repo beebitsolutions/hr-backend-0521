@@ -23,7 +23,7 @@ class CreateDogsTable extends Migration
 
             $table->foreign('owner_id')
                 ->references('id')
-                ->on(self::TABLE)
+                ->on('owners')
                 ->onUpdate('cascade');
         });
     }

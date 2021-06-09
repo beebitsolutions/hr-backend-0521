@@ -16,9 +16,10 @@ class CreateDogParkTable extends Migration
     public function up(): void
     {
         Schema::create(self::TABLE, function (Blueprint $table) {
+            $table->id();
             $table->unsignedBigInteger('dog_id');
-
             $table->unsignedBigInteger('park_id');
+            $table->timestamps();
 
             $table->foreign('dog_id')
                 ->references('id')
