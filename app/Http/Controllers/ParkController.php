@@ -9,6 +9,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use DB;
+use Carbon\Carbon;
 
 class ParkController extends Controller
 {
@@ -58,7 +59,17 @@ class ParkController extends Controller
      */
     public function forceOwnersLeave()
     {
-
+        //No me queda muy claro si tengo que echarlos cada hora aunque lleven 10 minutos
+        //Yo he hecho que cada hora eche a los que llevan una hora
+        //Lo más exacto aunque poco eficiente sería lanzar esta función cada minuto o cada 5 minutos
+        $currentTime = Carbon::now();
+        $dogsInPark = DB::table('dog_park')->get();
+        foreach ($dogsInPark as $dogPark) {
+            if($currentTime->diffInHours($dogPark->created_at) >= 1){
+                DB::table('dog_park')->where('dog_id', $dogPark->dog_id)->delete();
+            }
+        }
+        return "Owners forced to leave";
     }
 
     public function create(Request $request): Park
