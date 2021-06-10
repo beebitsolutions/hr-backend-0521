@@ -10,9 +10,16 @@ use Illuminate\Support\Facades\Cache;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use DB;
 use Carbon\Carbon;
+use App\Http\Controllers\BaseController;
 
-class ParkController extends Controller
+class ParkController extends BaseController
 {
+    protected $tableName = 'parks';
+
+    public function getTableName(){
+        return $this->tableName;
+    }
+
     public function addOwnerWithDogs(Request $request)
     {
         $park_id = $request->park_id;
@@ -72,21 +79,13 @@ class ParkController extends Controller
         return "Owners forced to leave";
     }
 
-    public function create(Request $request): Park
+    public function create(Request $request)
     {
-        $request->validate([
-            'name' => 'required'
-        ]);
-
-        $park = new Park();
-        $park->name = $request->input('name');
-        $park->save();
-
-        return $park;
+        return $this->createEntity($request);
     }
 
     public function index(Request $request)
     {
-        return Park::all();
+        return $this->listEntities();
     }
 }
