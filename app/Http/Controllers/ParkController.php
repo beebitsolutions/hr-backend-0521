@@ -7,11 +7,33 @@ use App\Models\Park;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Database\Eloquent\ModelNotFoundException;
+use DB;
 
 class ParkController extends Controller
 {
     public function addOwnerWithDogs(Request $request)
     {
+        $park_id = $request->park_id;
+        $owner_id = $request->owner_id;
+
+        try {
+            $owner = Owner::findOrFail($owner_id);
+            $park = Park::findOrFail($park_id);
+
+            foreach ($owner->dogs as $dog) {
+                DB::table('dog_park')->insert([
+                    'created_at' => \Carbon\Carbon::now(),
+                    'updated_at' => \Carbon\Carbon::now(),
+                    'dog_id' => $dog->id,
+                    'park_id' => $park_id
+                ]);
+            }
+
+        } catch (ModelNotFoundException) {
+            return "Owner or park don't exist";
+        }
+
 
     }
 
