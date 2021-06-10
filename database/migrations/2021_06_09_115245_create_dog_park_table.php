@@ -19,13 +19,18 @@ class CreateDogParkTable extends Migration
             $table->id();
             $table->unsignedBigInteger('dog_id');
             $table->unsignedBigInteger('park_id');
-            $table->boolean('leave')->default(0);
+            $table->boolean('leave')
+                ->default(0)
+                ->comment('the dog leaves the park.');
             $table->timestamps();
 
             $table->foreign('dog_id')
                 ->references('id')
-                ->on('dogs')
-                ->onUpdate('cascade');
+                ->on('dogs');
+
+            $table->foreign('park_id')
+                ->references('id')
+                ->on('parks');
         });
     }
 
