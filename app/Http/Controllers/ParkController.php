@@ -7,6 +7,7 @@ use App\Models\DogPark;
 use App\Models\Owner;
 use App\Models\Park;
 use Carbon\Carbon;
+use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
@@ -21,7 +22,8 @@ class ParkController extends Controller
         $request->validate([
             'park_id' => 'exists:parks,id|required',
             'owner_id' => 'exists:owners,id|required',
-            'dogs' => 'array'
+            'dogs' => 'array',
+            'dogs.*' => 'exists:dogs,id|integer',
         ]);
 
         $parkId = $request->park_id;
@@ -41,6 +43,7 @@ class ParkController extends Controller
                 'park_id' => $parkId,
                 'leave' => 0
             ]);
+            Cache::forget($parkId.'_owners');
         }
     }
 
@@ -51,26 +54,16 @@ class ParkController extends Controller
     public function listOwnersWithDogs(Park $park): JsonResponse
     {
         if (Cache::has($park->id.'_owners') ) {
-            $response = ["owners" => Cache::get($park->id.'_owners')];
+            $ownersWithDog = Cache::get($park->id.'_owners');
         } else {
-            $dogsByOwner = $park->getDogsWithOwner()->groupBy('owner_id');
-            $ownersWithDog = $dogsByOwner->map(function ($dogs) {
-                $owner = $dogs->last()->owner->toArray();
-                foreach ($dogs as $dog) {
-                    unset($dog['owner']);
-                    $owner['dogs'][] = $dog;
-                }
-
-                return $owner;
-            })->values();
-
+            $ownersWithDog = $park->getOwnersWithDogs();
             Cache::put($park->id.'_owners', $ownersWithDog);
-
-            $response = [
-                "owners" => $ownersWithDog,
-            ];
-
         }
+
+        $response = [
+            "owners" => $ownersWithDog,
+        ];
+
         return response()->json($response);
     }
 
@@ -102,10 +95,9 @@ class ParkController extends Controller
     }
 
     /**
-     * @param Request $request
-     * @return Park[]|\Illuminate\Database\Eloquent\Collection
+     * @return Park[]|Collection
      */
-    public function index(Request $request)
+    public function index()
     {
         return Park::all();
     }
