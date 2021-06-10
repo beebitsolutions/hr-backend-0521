@@ -17,7 +17,7 @@ class CreateDogsTable extends Migration
             $table->id();
             $table->timestamps();
             $table->string('name');
-            $table->bigInteger('owner_id');
+            $table->unsignedBigInteger('owner_id');
 
             $table->foreign('owner_id')
                 ->references('id')
