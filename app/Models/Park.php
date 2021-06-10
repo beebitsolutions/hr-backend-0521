@@ -39,4 +39,22 @@ class Park extends Model
             ->with('owner')
             ->get();
     }
+
+    /**
+     * @return Collection|\Illuminate\Support\Collection
+     */
+    public function getOwnersWithDogs()
+    {
+        $dogsByOwner = $this->getDogsWithOwner()->groupBy('owner_id');
+
+        return $dogsByOwner->map(function ($dogs) {
+            $owner = $dogs->last()->owner->toArray();
+            foreach ($dogs as $dog) {
+                unset($dog['owner']);
+                $owner['dogs'][] = $dog;
+            }
+
+            return $owner;
+        })->values();
+    }
 }
