@@ -17,4 +17,8 @@ class Dog extends Model
     {
         return $this->belongsTo(Owner::class);
     }
+
+    public function parks(){
+        return $this->belongsToMany(Park::class);
+    }
 }

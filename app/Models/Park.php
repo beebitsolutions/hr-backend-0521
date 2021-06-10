@@ -12,4 +12,8 @@ use Illuminate\Database\Eloquent\Model;
 class Park extends Model
 {
     use HasFactory;
+
+    public function dogs(){
+        return $this->belongsToMany(Dog::class);
+    }
 }
