@@ -3,29 +3,45 @@
 namespace App\Http\Controllers;
 
 use App\Models\Dog;
-use App\Models\Owner;
+use App\Repositories\Interfaces\DogRepositoryInterface;
+use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Http\Request;
 
 class DogController extends Controller
 {
-    public function index(Request $request)
+
+    /** @var DogRepositoryInterface */
+    private $dogRepository;
+
+    /**
+     * DogController constructor.
+     * @param DogRepositoryInterface $dogRepository
+     */
+    public function __construct(DogRepositoryInterface $dogRepository)
     {
-        return Dog::with('owner')->get();
+        $this->dogRepository = $dogRepository;
     }
 
+    /**
+     * @return Builder[]|Collection
+     */
+    public function index()
+    {
+        return $this->dogRepository->index();
+    }
+
+    /**
+     * @param Request $request
+     * @return Dog
+     */
     public function create(Request $request): Dog
     {
         $request->validate([
             'name' => 'required',
-            'owner_id' => 'required',
+            'owner_id' => 'exists:owners,id|required',
         ]);
 
-        $owner = Owner::findOrFail($request->input('owner_id'));
-        $dog = new Dog();
-        $dog->name = $request->input('name');
-        $dog->owner()->associate($owner);
-        $dog->save();
-
-        return $dog;
+        return $this->dogRepository->create($request->all());
     }
 }

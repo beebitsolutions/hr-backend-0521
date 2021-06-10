@@ -4,9 +4,9 @@ use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 
-class CreateDogsTable extends Migration
+class CreateDogParkTable extends Migration
 {
-    private const TABLE = 'dogs';
+    private const TABLE = 'dog_park';
 
     /**
      * Run the migrations.
@@ -17,14 +17,20 @@ class CreateDogsTable extends Migration
     {
         Schema::create(self::TABLE, function (Blueprint $table) {
             $table->id();
+            $table->unsignedBigInteger('dog_id');
+            $table->unsignedBigInteger('park_id');
+            $table->boolean('leave')
+                ->default(0)
+                ->comment('the dog leaves the park.');
             $table->timestamps();
-            $table->string('name');
-            $table->unsignedBigInteger('owner_id');
 
-            $table->foreign('owner_id')
+            $table->foreign('dog_id')
                 ->references('id')
-                ->on('owners')
-                ->onUpdate('cascade');
+                ->on('dogs');
+
+            $table->foreign('park_id')
+                ->references('id')
+                ->on('parks');
         });
     }
 
