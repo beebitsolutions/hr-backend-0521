@@ -33,12 +33,16 @@ Route::post('/tokens/create', function (Request $request) {
 Route::middleware('auth:sanctum')->group(function() {
     Route::get('owners', [OwnerController::class, 'list']);
     Route::post('owners', [OwnerController::class, 'create']);
+
     Route::get('dogs', [DogController::class, 'index']);
     Route::post('dogs', [DogController::class, 'create']);
+
     Route::get('parks', [ParkController::class, 'index']);
     Route::post('parks', [ParkController::class, 'create']);
-    Route::get('parks/owners', [ParkController::class, 'listOwnersWithDogs']);
-    Route::post('parks/owners', [ParkController::class, 'addOwnerWithDogs']);
-    Route::delete('parks/owners', [ParkController::class, 'forceOwnersLeave']);
+    Route::group(['prefix' => 'parks'], function () {
+        Route::get('{park}/owners', [ParkController::class, 'listOwnersWithDogs']);
+        Route::post('owners', [ParkController::class, 'addOwnerWithDogs']);
+        Route::delete('owners', [ParkController::class, 'forceOwnersLeave']);
+    });
 });
 

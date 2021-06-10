@@ -19,6 +19,7 @@ class CreateDogParkTable extends Migration
             $table->id();
             $table->unsignedBigInteger('dog_id');
             $table->unsignedBigInteger('park_id');
+            $table->boolean('leave')->default(0);
             $table->timestamps();
 
             $table->foreign('dog_id')

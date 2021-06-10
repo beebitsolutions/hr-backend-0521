@@ -2,56 +2,109 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Dog;
+use App\Models\DogPark;
 use App\Models\Owner;
 use App\Models\Park;
+use Carbon\Carbon;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
 
 class ParkController extends Controller
 {
-    public function addOwnerWithDogs(Request $request)
+    /**
+     * @param Request $request
+     */
+    public function addOwnerWithDogs(Request $request): void
     {
+        $request->validate([
+            'park_id' => 'exists:parks,id|required',
+            'owner_id' => 'exists:owners,id|required',
+            'dogs' => 'array'
+        ]);
 
+        $parkId = $request->park_id;
+        $ownerId = $request->owner_id;
+        $dogsId = $request->dogs;
+
+        if (isset($dogsId) && !empty($dogsId)) {
+            $ownerDogsIds = Dog::filterOwner($dogsId, $ownerId)->get()->pluck('id');
+        } else {
+            $owner = Owner::findOrFail($ownerId);
+            $ownerDogsIds = $owner->dogs->pluck('id');
+        }
+
+        foreach ($ownerDogsIds as $dogId) {
+            DogPark::firstOrCreate([
+                'dog_id' => $dogId,
+                'park_id' => $parkId,
+                'leave' => 0
+            ]);
+        }
     }
 
-    public function listOwnersWithDogs(Request $request, Park $park): JsonResponse
+    /**
+     * @param Park $park
+     * @return JsonResponse
+     */
+    public function listOwnersWithDogs(Park $park): JsonResponse
     {
-        if(Cache::has($park->id.'_owners') && Cache::has($park->id.'_dogs')) {
-            $response = ["owners" => Cache::get($park->id.'_owners'), "dogs" => Cache::get($park->id.'_dogs')];
+        if (Cache::has($park->id.'_owners') ) {
+            $response = ["owners" => Cache::get($park->id.'_owners')];
         } else {
+            $dogsByOwner = $park->getDogsWithOwner()->groupBy('owner_id');
+            $ownersWithDog = $dogsByOwner->map(function ($dogs) {
+                $owner = $dogs->last()->owner->toArray();
+                foreach ($dogs as $dog) {
+                    unset($dog['owner']);
+                    $owner['dogs'][] = $dog;
+                }
 
-            $ownersInPark = []; //Completar
-            $dogsInPark = []; //Completar
-            Cache::put($park->id.'_owners', $ownersInPark);
-            Cache::put($park->id.'_dogs', $dogsInPark);
-            $response = ["owners" => $ownersInPark, "dogs" => $dogsInPark];
+                return $owner;
+            })->values();
+
+            Cache::put($park->id.'_owners', $ownersWithDog);
+
+            $response = [
+                "owners" => $ownersWithDog,
+            ];
 
         }
         return response()->json($response);
     }
 
-    /**
-     * Esta función echa a los propietarios de perros a irse del parque cuando ha pasado más de una hora.
-     */
-    public function forceOwnersLeave()
+    public function forceOwnersLeave(): void
     {
-
+        $dateNow = Carbon::now();
+        echo "Date: " . $dateNow->format("Y-m-d H:i:s") . PHP_EOL;
+        $date = $dateNow->modify('-1 hour')->format("Y-m-d H:i:59");
+        $park = DogPark::endsInDate($date)->get();
+        $park->map(function ($item) {
+            echo "Park: {$item->park_id} - Dog: {$item->dog_id} leave" . PHP_EOL;
+            $item->leave();
+        });
     }
 
+    /**
+     * @param Request $request
+     * @return Park
+     */
     public function create(Request $request): Park
     {
         $request->validate([
             'name' => 'required'
         ]);
 
-        $park = new Park();
-        $park->name = $request->input('name');
-        $park->save();
-
-        return $park;
+        return Park::create([
+            'name' => $request->name
+        ]);
     }
 
+    /**
+     * @param Request $request
+     * @return Park[]|\Illuminate\Database\Eloquent\Collection
+     */
     public function index(Request $request)
     {
         return Park::all();
