@@ -12,4 +12,9 @@ use Illuminate\Database\Eloquent\Model;
 class Park extends Model
 {
     use HasFactory;
+
+    public function dogs(): \Illuminate\Database\Eloquent\Relations\BelongsToMany
+    {
+        return $this->belongsToMany(Dog::class);
+    }
 }
