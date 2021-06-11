@@ -7,11 +7,41 @@ use App\Models\Park;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Database\Eloquent\ModelNotFoundException;
+use DB;
+use Carbon\Carbon;
+use App\Http\Controllers\BaseController;
 
-class ParkController extends Controller
+class ParkController extends BaseController
 {
+    protected $tableName = 'parks';
+
+    public function getTableName(){
+        return $this->tableName;
+    }
+
     public function addOwnerWithDogs(Request $request)
     {
+        $park_id = $request->park_id;
+        $owner_id = $request->owner_id;
+
+        try {
+            $owner = Owner::findOrFail($owner_id);
+            $park = Park::findOrFail($park_id);
+
+            foreach ($owner->dogs as $dog) {
+                DB::table('dog_park')->insert([
+                    'created_at' => \Carbon\Carbon::now(),
+                    'updated_at' => \Carbon\Carbon::now(),
+                    'dog_id' => $dog->id,
+                    'park_id' => $park_id
+                ]);
+            }
+
+        } catch (ModelNotFoundException) {
+            return "Owner or park don't exist";
+        }
+
 
     }
 
@@ -36,24 +66,26 @@ class ParkController extends Controller
      */
     public function forceOwnersLeave()
     {
-
+        //No me queda muy claro si tengo que echarlos cada hora aunque lleven 10 minutos
+        //Yo he hecho que cada hora eche a los que llevan una hora
+        //Lo más exacto aunque poco eficiente sería lanzar esta función cada minuto o cada 5 minutos
+        $currentTime = Carbon::now();
+        $dogsInPark = DB::table('dog_park')->get();
+        foreach ($dogsInPark as $dogPark) {
+            if($currentTime->diffInHours($dogPark->created_at) >= 1){
+                DB::table('dog_park')->where('dog_id', $dogPark->dog_id)->delete();
+            }
+        }
+        return "Owners forced to leave";
     }
 
-    public function create(Request $request): Park
+    public function create(Request $request)
     {
-        $request->validate([
-            'name' => 'required'
-        ]);
-
-        $park = new Park();
-        $park->name = $request->input('name');
-        $park->save();
-
-        return $park;
+        return $this->createEntity($request);
     }
 
     public function index(Request $request)
     {
-        return Park::all();
+        return $this->listEntities();
     }
 }

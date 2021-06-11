@@ -5,23 +5,22 @@ namespace App\Http\Controllers;
 use App\Models\Dog;
 use App\Models\Owner;
 use Illuminate\Http\Request;
+use App\Http\Controllers\BaseController;
 
-class OwnerController extends Controller
+class OwnerController extends BaseController
 {
-    public function create(Request $request): Owner
+    protected $tableName = 'owners';
+
+    public function getTableName(){
+        return $this->tableName;
+    }
+
+    public function create(Request $request)
     {
-        $request->validate([
-            'name' => 'required'
-        ]);
-
-        $owner = new Owner();
-        $owner->name = $request->input('name');
-        $owner->save();
-
-        return $owner;
+        return $this->createEntity($request);
     }
 
     public function list() {
-        return Owner::with('dogs')->get();
+        return $this->listEntities();
     }
 }
