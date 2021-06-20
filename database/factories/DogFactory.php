@@ -22,10 +22,11 @@ class DogFactory extends Factory
      */
     public function definition()
     {
-        $ownerId = Owner::inRandomOrder()->limit(1)->get()[0]->id;
+        //$ownerId = Owner::inRandomOrder()->limit(1)->get()[0]->id;
+        $totalOwners = Owner::count();
         return [
             'name' => $this->faker->name(),
-            'owner_id' => $ownerId
+            'owner_id' => $this->faker->numberBetween(1,$totalOwners)
         ];
     }
 }

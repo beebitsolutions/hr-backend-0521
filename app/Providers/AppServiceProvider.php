@@ -13,7 +13,10 @@ class AppServiceProvider extends ServiceProvider
      */
     public function register()
     {
-        //
+        $this->app->bind(
+            'App\Repositories\DogRepositoryInterface',
+            'App\Repositories\DogRepository'
+        );
     }
 
     /**
